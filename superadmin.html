@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Super Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      padding: 20px;
+    }
+    h2 {
+      color: #0b3d91;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #0b3d91;
+      color: white;
+    }
+    button {
+      padding: 5px 10px;
+      background-color: #0b3d91;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #093076;
+    }
+  </style>
+</head>
+<body>
+  <h2>🛡️ Super Admin - Account Approvals</h2>
+
+  <h3>Pending Instructor Accounts</h3>
+  <table id="instructor-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h3>Pending Admin Accounts</h3>
+  <table id="admin-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function loadPending(role, tableId, endpoint) {
+      try {
+        const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/employees/pending/${endpoint}`);
+        const data = await res.json();
+        const tbody = document.getElementById(tableId).querySelector('tbody');
+        tbody.innerHTML = '';
+        data.data.forEach(user => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td><button onclick="approve('${user._id}', '${endpoint}')">Approve</button></td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        alert(`❌ Failed to load ${role}s`);
+      }
+    }
+
+    async function approve(userId, endpoint) {
+      try {
+        const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/employees/approve/${endpoint}/${userId}`, {
+          method: "PATCH"
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert("✅ Approved successfully");
+          loadAll();
+        } else {
+          alert("❌ " + data.message);
+        }
+      } catch (err) {
+        alert("❌ Approval error");
+      }
+    }
+
+    function loadAll() {
+      loadPending('Instructor', 'instructor-table', 'instructor');
+      loadPending('Admin', 'admin-table', 'admin');
+    }
+
+    loadAll();
+  </script>
+</body>
+</html>
