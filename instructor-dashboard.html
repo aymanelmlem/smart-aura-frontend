@@ -10,21 +10,21 @@
       background: #f0f2f5;
       padding: 20px;
     }
-    h2, h3 {
+    h2, h3, h4 {
       color: #0b3d91;
     }
-    .course {
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .course, .lecture {
       background: #fff;
       margin-bottom: 30px;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    .lecture {
-      background: #eef2f9;
-      padding: 15px;
-      border-radius: 6px;
-      margin-top: 10px;
     }
     input, textarea, select, button {
       width: 100%;
@@ -48,10 +48,21 @@
   </style>
 </head>
 <body>
-  <h2>🎓 Instructor Dashboard</h2>
+  <div class="top-bar">
+    <h2>🎓 Instructor Dashboard</h2>
+    <div>
+      <strong id="instructor-name">👨‍🏫 </strong>
+      <button onclick="logout()">🚪 Logout</button>
+    </div>
+  </div>
 
-  <div class="course" id="course-1">
-    <h3>📘 Course Title: Advanced AI</h3>
+  <h3>📚 Select Course</h3>
+  <select id="course-dropdown" onchange="loadCourseData()">
+    <option disabled selected>-- Choose a Course --</option>
+  </select>
+
+  <div class="course" id="course-section" style="display:none;">
+    <h3 id="course-title">📘 Course Title: </h3>
 
     <h4>👨‍🎓 Enroll Student in This Course</h4>
     <select id="student-select">
@@ -76,9 +87,38 @@
   </div>
 
   <script>
+    let instructorName = localStorage.getItem("instructorName") || "Unknown Instructor";
+    let instructorId = localStorage.getItem("instructorId") || "";
+    document.getElementById("instructor-name").textContent = `👨‍🏫 ${instructorName}`;
+
+    async function loadCourses() {
+      try {
+        const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/courses/instructor/${instructorId}`);
+        const data = await res.json();
+        const dropdown = document.getElementById("course-dropdown");
+        data.data.forEach(course => {
+          const opt = document.createElement("option");
+          opt.value = course._id;
+          opt.textContent = course.title;
+          dropdown.appendChild(opt);
+        });
+      } catch {
+        alert("❌ Failed to load courses");
+      }
+    }
+
+    function loadCourseData() {
+      const selected = document.getElementById("course-dropdown");
+      const courseId = selected.value;
+      const courseTitle = selected.options[selected.selectedIndex].text;
+      document.getElementById("course-title").textContent = `📘 Course Title: ${courseTitle}`;
+      document.getElementById("course-section").style.display = 'block';
+      localStorage.setItem("selectedCourseId", courseId);
+    }
+
     async function loadStudents() {
       try {
-        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/students/approved");
+        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/instructor/approved-students");
         const data = await res.json();
         const select = document.getElementById("student-select");
         data.data.forEach(student => {
@@ -94,9 +134,9 @@
 
     async function enrollStudent() {
       const studentId = document.getElementById("student-select").value;
-      const courseId = "COURSE_ID_HERE"; // استبدل هذا لاحقًا بالمعرف الديناميكي للكورس
+      const courseId = localStorage.getItem("selectedCourseId");
       try {
-        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/students/enroll", {
+        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/instructor/enroll-student", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ studentId, courseId })
@@ -122,12 +162,14 @@
       const title = document.getElementById('lecture-title').value;
       const videoUrl = document.getElementById('video-url').value;
       const description = document.getElementById('lecture-description').value;
+      const courseId = localStorage.getItem("selectedCourseId");
 
       const files = document.querySelectorAll("input[name='lecture-files']");
       const formData = new FormData();
       formData.append("title", title);
       formData.append("videoUrl", videoUrl);
       formData.append("description", description);
+      formData.append("courseId", courseId);
 
       files.forEach(input => {
         Array.from(input.files).forEach(file => {
@@ -136,7 +178,7 @@
       });
 
       try {
-        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/lectures/upload", {
+        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/instructor/upload", {
           method: "POST",
           body: formData
         });
@@ -150,9 +192,14 @@
 
     function addQuiz() {
       alert("📋 Redirecting to Quiz Creator for this lecture...");
-      // يمكن تنفيذ التوجيه لاحقًا هنا لصفحة أو نافذة إنشاء اختبار
     }
 
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+
+    loadCourses();
     loadStudents();
   </script>
 </body>
