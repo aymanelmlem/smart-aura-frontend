@@ -4,179 +4,153 @@
   <meta charset="UTF-8" />
   <title>Instructor Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #f0f2f5; padding: 20px; }
-    h2, h3, h4 { color: #0b3d91; }
-    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .course, .lecture { background: #fff; margin-bottom: 30px; padding: 20px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-    input, textarea, select, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; }
-    button { background-color: #0b3d91; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: #093076; }
-    .file-inputs, .dynamic-section { margin-top: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+    }
+    .header {
+      background: #0b3d91;
+      color: white;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .container {
+      margin-top: 30px;
+    }
+    .course-section {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    h2, h3 {
+      color: #0b3d91;
+    }
+    .lecture-form input, .lecture-form select, .lecture-form textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    .lecture-form button {
+      background-color: #0b3d91;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .lecture-form button:hover {
+      background-color: #08357c;
+    }
   </style>
 </head>
 <body>
-  <div class="top-bar">
+
+  <div class="header">
     <h2>🎓 Instructor Dashboard</h2>
     <div>
-      <strong id="instructor-name">👨‍🏫 </strong>
-      <button onclick="logout()">🚪 Logout</button>
+      <span id="instructorName">👨‍🏫 Unknown Instructor</span>
+      <button onclick="logout()">🔒 Logout</button>
     </div>
   </div>
 
-  <h3>📚 Select Course</h3>
-  <select id="course-dropdown" onchange="loadCourseData()">
-    <option disabled selected>-- Choose a Course --</option>
-  </select>
-
-  <div class="course" id="course-section" style="display:none;">
-    <h3 id="course-title">📘 Course Title: </h3>
-
-    <h4>👨‍🏫 Enroll Students</h4>
-    <select id="student-select">
-      <option disabled selected>-- Select Student --</option>
-    </select>
-    <button onclick="enrollStudent()">✅ Enroll</button>
-
-    <div class="lecture">
-      <h4>➕ Add Lecture</h4>
-      <input type="text" placeholder="Lecture Title" id="lecture-title">
-      <textarea placeholder="Lecture Description" id="lecture-description"></textarea>
-      <select id="lecture-category">
-        <option disabled selected>Select Category</option>
-        <option>Basics</option>
-        <option>Advanced</option>
-        <option>Case Study</option>
+  <div class="container">
+    <div class="course-section">
+      <h3>📚 Select Course</h3>
+      <select id="courseSelect" onchange="renderLectureForm()">
+        <option value="">-- Choose a Course --</option>
       </select>
-      <input type="url" placeholder="Video URL (optional)" id="video-url">
-      <input type="url" placeholder="MP3 URL (optional)" id="mp3-url">
-
-      <div class="file-inputs" id="file-inputs">
-        <input type="file" name="lecture-files" multiple>
-      </div>
-
-      <button onclick="addMoreFiles()">➕ Add More Files</button>
-      <button onclick="submitLecture()">📀 Save Lecture</button>
-      <button onclick="addQuiz()">📋 Add Quiz</button>
     </div>
+
+    <div id="lectureFormContainer"></div>
   </div>
 
   <script>
     const instructorName = localStorage.getItem("instructorName") || "Unknown Instructor";
-    const instructorId = localStorage.getItem("instructorId") || "";
-    document.getElementById("instructor-name").textContent = `👨‍🏫 ${instructorName}`;
+    const instructorId = localStorage.getItem("instructorId");
+    document.getElementById("instructorName").innerText = instructorName;
 
-    async function loadCourses() {
-      try {
-        const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/courses/instructor/${instructorId}`);
-        const data = await res.json();
-        const dropdown = document.getElementById("course-dropdown");
-        data.data.forEach(course => {
-          const opt = document.createElement("option");
-          opt.value = course._id;
-          opt.textContent = course.title;
-          dropdown.appendChild(opt);
-        });
-      } catch {
-        alert("❌ Failed to load courses");
-      }
-    }
-
-    function loadCourseData() {
-      const selected = document.getElementById("course-dropdown");
-      const courseId = selected.value;
-      const courseTitle = selected.options[selected.selectedIndex].text;
-      document.getElementById("course-title").textContent = `📘 Course Title: ${courseTitle}`;
-      document.getElementById("course-section").style.display = 'block';
-      localStorage.setItem("selectedCourseId", courseId);
-    }
-
-    async function loadStudents() {
-      try {
-        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/instructor/approved-students");
-        const data = await res.json();
-        const select = document.getElementById("student-select");
-        data.data.forEach(student => {
-          const opt = document.createElement("option");
-          opt.value = student._id;
-          opt.textContent = student.name + " (" + student.email + ")";
-          select.appendChild(opt);
-        });
-      } catch {
-        alert("❌ Failed to load students");
-      }
-    }
-
-    async function enrollStudent() {
-      const studentId = document.getElementById("student-select").value;
-      const courseId = localStorage.getItem("selectedCourseId");
-      try {
-        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/instructor/enroll-student", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ studentId, courseId })
-        });
-        const data = await res.json();
-        alert(data.success ? "✅ Student enrolled successfully" : "❌ " + data.message);
-      } catch {
-        alert("❌ Error enrolling student");
-      }
-    }
-
-    function addMoreFiles() {
-      const container = document.getElementById("file-inputs");
-      const input = document.createElement("input");
-      input.type = "file";
-      input.name = "lecture-files";
-      input.multiple = true;
-      container.appendChild(input);
-    }
-
-    async function submitLecture() {
-      const title = document.getElementById('lecture-title').value;
-      const description = document.getElementById('lecture-description').value;
-      const category = document.getElementById('lecture-category').value;
-      const videoUrl = document.getElementById('video-url').value;
-      const mp3Url = document.getElementById('mp3-url').value;
-      const courseId = localStorage.getItem("selectedCourseId");
-
-      const files = document.querySelectorAll("input[name='lecture-files']");
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("category", category);
-      formData.append("videoUrl", videoUrl);
-      formData.append("mp3Url", mp3Url);
-      formData.append("courseId", courseId);
-
-      files.forEach(input => {
-        Array.from(input.files).forEach(file => {
-          formData.append("files", file);
-        });
+    async function fetchCourses() {
+      const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/courses/instructor/${instructorId}`);
+      const data = await res.json();
+      const select = document.getElementById("courseSelect");
+      data.data.forEach(course => {
+        const option = document.createElement("option");
+        option.value = course._id;
+        option.textContent = course.title;
+        select.appendChild(option);
       });
-
-      try {
-        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/instructor/upload", {
-          method: "POST",
-          body: formData
-        });
-        const data = await res.json();
-        alert(data.success ? "✅ Lecture saved successfully" : "❌ " + data.message);
-      } catch {
-        alert("❌ Upload failed");
-      }
-    }
-
-    function addQuiz() {
-      alert("📋 Redirecting to Quiz Creator for this lecture...");
     }
 
     function logout() {
       localStorage.clear();
-      window.location.href = "index.html";
+      window.location.href = "instructor-login.html";
     }
 
-    loadCourses();
-    loadStudents();
+    function renderLectureForm() {
+      const courseId = document.getElementById("courseSelect").value;
+      if (!courseId) {
+        document.getElementById("lectureFormContainer").innerHTML = "";
+        return;
+      }
+
+      document.getElementById("lectureFormContainer").innerHTML = `
+        <form class="lecture-form" onsubmit="submitLecture(event)">
+          <h3>📝 Add Lecture</h3>
+          <input type="text" id="title" placeholder="Lecture Title" required />
+          <textarea id="description" placeholder="Lecture Description"></textarea>
+          <select id="category">
+            <option value="Basics">Basics</option>
+            <option value="Advanced">Advanced</option>
+            <option value="Case Study">Case Study</option>
+          </select>
+          <input type="text" id="videoUrl" placeholder="Video URL (optional)" />
+          <input type="text" id="mp3Url" placeholder="MP3 URL (optional)" />
+          <input type="file" id="files" multiple />
+          <button type="submit">Upload Lecture</button>
+          <button type="button" onclick="alert('📋 Add Quiz')">➕ Add Quiz</button>
+        </form>
+      `;
+    }
+
+    async function submitLecture(e) {
+      e.preventDefault();
+      const courseId = document.getElementById("courseSelect").value;
+      const formData = new FormData();
+      formData.append("title", document.getElementById("title").value);
+      formData.append("description", document.getElementById("description").value);
+      formData.append("category", document.getElementById("category").value);
+      formData.append("videoUrl", document.getElementById("videoUrl").value);
+      formData.append("mp3Url", document.getElementById("mp3Url").value);
+      formData.append("courseId", courseId);
+
+      const files = document.getElementById("files").files;
+      for (let i = 0; i < files.length; i++) {
+        formData.append("files", files[i]);
+      }
+
+      const res = await fetch("https://backend-sau-fdr6.onrender.com/api/instructor/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        alert("✅ Lecture uploaded successfully!");
+        document.querySelector(".lecture-form").reset();
+      } else {
+        alert("❌ Upload failed: " + result.message);
+      }
+    }
+
+    // init
+    fetchCourses();
   </script>
 </body>
 </html>
