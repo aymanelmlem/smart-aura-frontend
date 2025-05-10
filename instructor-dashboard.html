@@ -4,47 +4,14 @@
   <meta charset="UTF-8" />
   <title>Instructor Dashboard</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #f0f2f5;
-      padding: 20px;
-    }
-    h2, h3, h4 {
-      color: #0b3d91;
-    }
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    .course, .lecture {
-      background: #fff;
-      margin-bottom: 30px;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    input, textarea, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background-color: #0b3d91;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #093076;
-    }
-    .file-inputs {
-      margin-top: 10px;
-    }
+    body { font-family: Arial, sans-serif; margin: 0; background: #f0f2f5; padding: 20px; }
+    h2, h3, h4 { color: #0b3d91; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .course, .lecture { background: #fff; margin-bottom: 30px; padding: 20px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    input, textarea, select, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; }
+    button { background-color: #0b3d91; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #093076; }
+    .file-inputs, .dynamic-section { margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -64,31 +31,38 @@
   <div class="course" id="course-section" style="display:none;">
     <h3 id="course-title">📘 Course Title: </h3>
 
-    <h4>👨‍🎓 Enroll Student in This Course</h4>
+    <h4>👨‍🏫 Enroll Students</h4>
     <select id="student-select">
       <option disabled selected>-- Select Student --</option>
     </select>
-    <button onclick="enrollStudent()">✅ Enroll Selected Student</button>
+    <button onclick="enrollStudent()">✅ Enroll</button>
 
     <div class="lecture">
       <h4>➕ Add Lecture</h4>
       <input type="text" placeholder="Lecture Title" id="lecture-title">
-      <input type="url" placeholder="Video URL (optional)" id="video-url">
       <textarea placeholder="Lecture Description" id="lecture-description"></textarea>
+      <select id="lecture-category">
+        <option disabled selected>Select Category</option>
+        <option>Basics</option>
+        <option>Advanced</option>
+        <option>Case Study</option>
+      </select>
+      <input type="url" placeholder="Video URL (optional)" id="video-url">
+      <input type="url" placeholder="MP3 URL (optional)" id="mp3-url">
 
       <div class="file-inputs" id="file-inputs">
         <input type="file" name="lecture-files" multiple>
       </div>
 
       <button onclick="addMoreFiles()">➕ Add More Files</button>
-      <button onclick="submitLecture()">💾 Save Lecture</button>
+      <button onclick="submitLecture()">📀 Save Lecture</button>
       <button onclick="addQuiz()">📋 Add Quiz</button>
     </div>
   </div>
 
   <script>
-    let instructorName = localStorage.getItem("instructorName") || "Unknown Instructor";
-    let instructorId = localStorage.getItem("instructorId") || "";
+    const instructorName = localStorage.getItem("instructorName") || "Unknown Instructor";
+    const instructorId = localStorage.getItem("instructorId") || "";
     document.getElementById("instructor-name").textContent = `👨‍🏫 ${instructorName}`;
 
     async function loadCourses() {
@@ -142,8 +116,7 @@
           body: JSON.stringify({ studentId, courseId })
         });
         const data = await res.json();
-        if (data.success) alert("✅ Student enrolled successfully");
-        else alert("❌ " + data.message);
+        alert(data.success ? "✅ Student enrolled successfully" : "❌ " + data.message);
       } catch {
         alert("❌ Error enrolling student");
       }
@@ -160,15 +133,19 @@
 
     async function submitLecture() {
       const title = document.getElementById('lecture-title').value;
-      const videoUrl = document.getElementById('video-url').value;
       const description = document.getElementById('lecture-description').value;
+      const category = document.getElementById('lecture-category').value;
+      const videoUrl = document.getElementById('video-url').value;
+      const mp3Url = document.getElementById('mp3-url').value;
       const courseId = localStorage.getItem("selectedCourseId");
 
       const files = document.querySelectorAll("input[name='lecture-files']");
       const formData = new FormData();
       formData.append("title", title);
-      formData.append("videoUrl", videoUrl);
       formData.append("description", description);
+      formData.append("category", category);
+      formData.append("videoUrl", videoUrl);
+      formData.append("mp3Url", mp3Url);
       formData.append("courseId", courseId);
 
       files.forEach(input => {
@@ -183,9 +160,8 @@
           body: formData
         });
         const data = await res.json();
-        if (data.success) alert("✅ Lecture saved successfully");
-        else alert("❌ " + data.message);
-      } catch (err) {
+        alert(data.success ? "✅ Lecture saved successfully" : "❌ " + data.message);
+      } catch {
         alert("❌ Upload failed");
       }
     }
