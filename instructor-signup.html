@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Instructor Sign Up - Smart Aura University</title>
+  <meta charset="UTF-8" />
+  <title>Instructor Sign Up</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -22,8 +22,8 @@
       max-width: 400px;
     }
     h2 {
-      color: #0b3d91;
       text-align: center;
+      color: #0b3d91;
     }
     input, button {
       width: 100%;
@@ -45,44 +45,51 @@
       margin-top: 10px;
       text-align: center;
       font-weight: bold;
-      color: red;
     }
   </style>
 </head>
 <body>
   <div class="form-container">
     <h2>Instructor Sign Up</h2>
-    <form id="form">
-      <input type="email" id="email" placeholder="Email" required>
-      <input type="password" id="password" placeholder="Password" required>
+    <form id="signupForm">
+      <input type="text" id="name" placeholder="Full Name" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
       <button type="submit">Signup</button>
     </form>
     <div id="message" class="message"></div>
   </div>
 
   <script>
-    document.getElementById('form').addEventListener('submit', async function(e) {
+    document.getElementById("signupForm").addEventListener("submit", async function (e) {
       e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const msg = document.getElementById('message');
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const msg = document.getElementById("message");
 
       try {
-        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/employees/signup", {
+        const res = await fetch("https://backend-sau-fdr6.onrender.com:10000/api/employees/signup", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify({ name, email, password, role: "instructor" })
         });
+
         const data = await res.json();
         if (data.success) {
           msg.style.color = "green";
           msg.textContent = "✅ Success!";
+          setTimeout(() => {
+            window.location.href = "instructor-dashboard.html";
+          }, 1000);
         } else {
+          msg.style.color = "red";
           msg.textContent = "❌ " + data.message;
         }
       } catch (err) {
+        msg.style.color = "red";
         msg.textContent = "❌ Network error.";
       }
     });
