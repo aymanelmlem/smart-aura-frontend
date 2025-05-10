@@ -60,32 +60,35 @@
     <div id="message" class="message"></div>
   </div>
 
-  <script>
-    document.getElementById('form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const msg = document.getElementById('message');
+<script>
+  document.getElementById('form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const msg = document.getElementById('message');
 
-      try {
-        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/students/signup", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        if (data.success) {
-          msg.style.color = "green";
-          msg.textContent = "✅ Success!";
-        } else {
-          msg.textContent = "❌ " + data.message;
-        }
-      } catch (err) {
-        msg.textContent = "❌ Network error.";
+    try {
+      const res = await fetch("https://backend-sau-fdr6.onrender.com/api/students/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        msg.style.color = "green";
+        msg.textContent = "✅ Success!";
+      } else {
+        msg.style.color = "red";
+        msg.textContent = "❌ " + (data.error || data.message);
       }
-    });
-  </script>
+    } catch (err) {
+      msg.style.color = "red";
+      msg.textContent = "❌ Network error.";
+    }
+  }); // ✅ تم إغلاق addEventListener بشكل صحيح
+</script>
+
 </body>
 </html>
