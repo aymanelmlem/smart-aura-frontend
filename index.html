@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Aura University</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      background: #0b3d91;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #0b3d91;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #092b6c;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #777;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Smart Aura University</h1>
+  </div>
+
+  <div class="container">
+    <h2>🔐 Login</h2>
+    <select id="loginSelect">
+      <option value="">-- Select Role to Login --</option>
+      <option value="student-login.html">Student</option>
+      <option value="instructor-login.html">Instructor</option>
+      <option value="admin-login.html">Admin</option>
+    </select>
+    <button onclick="handleLogin()">Go to Login</button>
+
+    <h2>📝 Sign Up</h2>
+    <select id="signupSelect">
+      <option value="">-- Select Role to Sign Up --</option>
+      <option value="student-signup.html">Student</option>
+      <option value="instructor-signup.html">Instructor</option>
+      <option value="admin-signup.html">Admin</option>
+    </select>
+    <button onclick="handleSignup()">Go to Sign Up</button>
+
+    <h2>🛠️ Super Admin</h2>
+    <button onclick="location.href='superadmin-activations.html'">Go to Approvals Panel</button>
+  </div>
+
+  <div class="footer">
+    &copy; 2025 Smart Aura University. All rights reserved.
+  </div>
+
+  <script>
+    function handleLogin() {
+      const value = document.getElementById("loginSelect").value;
+      if (value) location.href = value;
+    }
+    function handleSignup() {
+      const value = document.getElementById("signupSelect").value;
+      if (value) location.href = value;
+    }
+  </script>
+
+</body>
+</html>
