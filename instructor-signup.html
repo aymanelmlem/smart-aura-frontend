@@ -71,14 +71,16 @@
       try {
         const res = await fetch("https://backend-sau-fdr6.onrender.com/api/employees/signup", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, password, role: "instructor" })
         });
 
         const data = await res.json();
         if (data.success) {
+          // ✅ حفظ الاسم والمعرف في localStorage
+          localStorage.setItem("instructorName", name);
+          localStorage.setItem("instructorId", data.data._id);
+
           msg.style.color = "green";
           msg.textContent = "✅ Success!";
           setTimeout(() => {

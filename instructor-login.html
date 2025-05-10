@@ -70,15 +70,21 @@
       try {
         const res = await fetch("https://backend-sau-fdr6.onrender.com/api/employees/login", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password })
         });
+
         const data = await res.json();
         if (data.success) {
+          // ✅ حفظ الاسم و ID في localStorage
+          localStorage.setItem("instructorName", data.data.name);
+          localStorage.setItem("instructorId", data.data._id);
+
           msg.style.color = "green";
           msg.textContent = "✅ Success!";
+          setTimeout(() => {
+            window.location.href = "instructor-dashboard.html";
+          }, 1000);
         } else {
           msg.textContent = "❌ " + data.message;
         }
