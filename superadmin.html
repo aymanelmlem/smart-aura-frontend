@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Super Admin Panel</title>
+  <meta charset="UTF-8" />
+  <title>Super Admin - Account Approvals</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f8f9fa;
+      background-color: #f0f2f5;
       padding: 20px;
     }
     h2 {
@@ -15,11 +15,11 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-bottom: 30px;
     }
     th, td {
-      border: 1px solid #ddd;
       padding: 10px;
+      border: 1px solid #ccc;
       text-align: left;
     }
     th {
@@ -27,89 +27,92 @@
       color: white;
     }
     button {
-      padding: 5px 10px;
       background-color: #0b3d91;
       color: white;
       border: none;
-      border-radius: 3px;
+      padding: 6px 10px;
+      border-radius: 4px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #093076;
+      background-color: #09306c;
     }
   </style>
 </head>
 <body>
   <h2>🛡️ Super Admin - Account Approvals</h2>
 
-  <h3>Pending Instructor Accounts</h3>
-  <table id="instructor-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <h3>Pending Admin Accounts</h3>
-  <table id="admin-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div id="accounts"></div>
 
   <script>
-    async function loadPending(role, tableId, endpoint) {
-      try {
-        const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/employees/pending/${endpoint}`);
-        const data = await res.json();
-        const tbody = document.getElementById(tableId).querySelector('tbody');
-        tbody.innerHTML = '';
-        data.data.forEach(user => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${user.name}</td>
-            <td>${user.email}</td>
-            <td><button onclick="approve('${user._id}', '${endpoint}')">Approve</button></td>
-          `;
-          tbody.appendChild(row);
-        });
-      } catch (err) {
-        alert(`❌ Failed to load ${role}s`);
+    async function fetchAccounts() {
+      const container = document.getElementById("accounts");
+      const roles = ["instructor", "admin", "student"];
+
+      for (const role of roles) {
+        const approved = await fetchAccountsByStatus(role, true);
+        const pending = await fetchAccountsByStatus(role, false);
+
+        container.innerHTML += `
+          <h3>✅ Approved ${capitalize(role)} Accounts</h3>
+          ${generateTable(approved, false)}
+          <h3>🕒 Pending ${capitalize(role)} Accounts</h3>
+          ${generateTable(pending, true, role)}
+        `;
       }
     }
 
-    async function approve(userId, endpoint) {
+    async function fetchAccountsByStatus(role, isApproved) {
       try {
-        const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/employees/approve/${endpoint}/${userId}`, {
+        const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/employees/${isApproved ? 'approved' : 'pending'}/${role}`);
+        const data = await res.json();
+
+        if (!data.success) {
+          alert(`❌ Failed to load ${isApproved ? 'approved' : 'pending'} ${role} accounts: ${data.message || 'Unknown error'}`);
+        }
+
+        return data.success ? data.data : [];
+      } catch (err) {
+        alert(`❌ Network error while fetching ${role} accounts.`);
+        return [];
+      }
+    }
+
+    function generateTable(data, showButton, role = "") {
+      if (!data.length) return "<p>No data available.</p>";
+      let rows = data.map(user => `
+        <tr>
+          <td>${user.name || "-"}</td>
+          <td>${user.email}</td>
+          <td>
+            ${showButton ? `<button onclick="approveUser('${role}', '${user._id}')">Approve</button>` : '✔️'}
+          </td>
+        </tr>`).join("");
+      return `<table><tr><th>Name</th><th>Email</th><th>Action</th></tr>${rows}</table>`;
+    }
+
+    async function approveUser(role, id) {
+      try {
+        const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/employees/approve/${role}/${id}`, {
           method: "PATCH"
         });
         const data = await res.json();
         if (data.success) {
           alert("✅ Approved successfully");
-          loadAll();
+          location.reload();
         } else {
           alert("❌ " + data.message);
         }
-      } catch (err) {
-        alert("❌ Approval error");
+      } catch {
+        alert("❌ Failed to approve");
       }
     }
 
-    function loadAll() {
-      loadPending('Instructor', 'instructor-table', 'instructor');
-      loadPending('Admin', 'admin-table', 'admin');
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    loadAll();
+    fetchAccounts();
   </script>
 </body>
 </html>
