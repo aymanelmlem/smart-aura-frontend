@@ -76,10 +76,13 @@
           body: JSON.stringify({ email, password })
         });
         const data = await res.json();
-        if (data.success) {
-          msg.style.color = "green";
-          msg.textContent = "✅ Success!";
-        } else {
+    if (data.success) {
+  msg.style.color = "green";
+  msg.textContent = "✅ Success!";
+  localStorage.setItem("studentId", data.data._id);
+  window.location.href = "student-dashboard.html"; // ✅ التوجيه
+}
+ else {
           msg.textContent = "❌ " + data.message;
         }
       } catch (err) {
