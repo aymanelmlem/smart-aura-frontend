@@ -21,7 +21,7 @@
     .container {
       margin-top: 30px;
     }
-    .course-section {
+    .course-section, .lecture-form, .student-enroll-form {
       background: white;
       padding: 15px;
       border-radius: 8px;
@@ -30,28 +30,25 @@
     h2, h3 {
       color: #0b3d91;
     }
-    .lecture-form input, .lecture-form select, .lecture-form textarea {
+    input, select, textarea, button {
       width: 100%;
       margin-bottom: 10px;
       padding: 10px;
       border-radius: 5px;
       border: 1px solid #ccc;
     }
-    .lecture-form button {
+    button {
       background-color: #0b3d91;
       color: white;
-      padding: 10px 20px;
       border: none;
-      border-radius: 6px;
       cursor: pointer;
     }
-    .lecture-form button:hover {
+    button:hover {
       background-color: #08357c;
     }
   </style>
 </head>
 <body>
-
   <div class="header">
     <h2>🎓 Instructor Dashboard</h2>
     <div>
@@ -62,10 +59,26 @@
 
   <div class="container">
     <div class="course-section">
-      <h3>📚 Select Course</h3>
+      <h3>📚 Your Courses</h3>
+      <div id="courseList"></div>
       <select id="courseSelect" onchange="renderLectureForm()">
         <option value="">-- Choose a Course --</option>
       </select>
+      <button onclick="showAddCourseForm()">➕ Add Course</button>
+      <div id="addCourseForm" style="display:none;">
+        <input type="text" id="newCourseTitle" placeholder="Course Title" required />
+        <input type="text" id="newCourseCategory" placeholder="Category" required />
+        <textarea id="newCourseDescription" placeholder="Course Description"></textarea>
+        <button onclick="addCourse()">✅ Submit Course</button>
+      </div>
+    </div>
+
+    <div id="studentEnrollSection" class="student-enroll-form" style="display: none;">
+      <h3>👥 Enroll Student to Course</h3>
+      <select id="studentSelect">
+        <option value="">-- Select Student --</option>
+      </select>
+      <button onclick="enrollStudent()">✅ Enroll</button>
     </div>
 
     <div id="lectureFormContainer"></div>
@@ -80,12 +93,66 @@
       const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/courses/instructor/${instructorId}`);
       const data = await res.json();
       const select = document.getElementById("courseSelect");
+      const list = document.getElementById("courseList");
+      select.innerHTML = '<option value="">-- Choose a Course --</option>';
+      list.innerHTML = "";
       data.data.forEach(course => {
         const option = document.createElement("option");
         option.value = course._id;
         option.textContent = course.title;
         select.appendChild(option);
+
+        const courseDiv = document.createElement("div");
+        courseDiv.style.marginBottom = '10px';
+        courseDiv.innerHTML = `<strong>${course.title}</strong> - <em>${course.category}</em><br><small>${course.description || ''}</small>`;
+        list.appendChild(courseDiv);
       });
+    }
+
+    async function fetchStudents() {
+      const res = await fetch("https://backend-sau-fdr6.onrender.com/api/instructor/approved-students");
+      const data = await res.json();
+      const select = document.getElementById("studentSelect");
+      select.innerHTML = '<option value="">-- Select Student --</option>';
+      data.data.forEach(student => {
+        const option = document.createElement("option");
+        option.value = student._id;
+        option.textContent = student.name;
+        select.appendChild(option);
+      });
+    }
+
+    async function enrollStudent() {
+      const courseId = document.getElementById("courseSelect").value;
+      const studentId = document.getElementById("studentSelect").value;
+      const res = await fetch("https://backend-sau-fdr6.onrender.com/api/instructor/enroll-student", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId, courseId })
+      });
+      const result = await res.json();
+      alert(result.success ? "✅ Student enrolled" : "❌ " + result.message);
+    }
+
+    function showAddCourseForm() {
+      const form = document.getElementById("addCourseForm");
+      form.style.display = form.style.display === "none" ? "block" : "none";
+    }
+
+    async function addCourse() {
+      const title = document.getElementById("newCourseTitle").value;
+      const category = document.getElementById("newCourseCategory").value;
+      const description = document.getElementById("newCourseDescription").value;
+      if (!title || !category) return alert("Please enter title and category");
+      const res = await fetch("https://backend-sau-fdr6.onrender.com/api/courses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, category, description, instructorId })
+      });
+      const result = await res.json();
+      alert(result.success ? "✅ Course added" : "❌ " + result.message);
+      document.getElementById("addCourseForm").style.display = "none";
+      fetchCourses();
     }
 
     function logout() {
@@ -95,11 +162,11 @@
 
     function renderLectureForm() {
       const courseId = document.getElementById("courseSelect").value;
+      document.getElementById("studentEnrollSection").style.display = courseId ? 'block' : 'none';
       if (!courseId) {
         document.getElementById("lectureFormContainer").innerHTML = "";
         return;
       }
-
       document.getElementById("lectureFormContainer").innerHTML = `
         <form class="lecture-form" onsubmit="submitLecture(event)">
           <h3>📝 Add Lecture</h3>
@@ -141,16 +208,11 @@
       });
 
       const result = await res.json();
-      if (result.success) {
-        alert("✅ Lecture uploaded successfully!");
-        document.querySelector(".lecture-form").reset();
-      } else {
-        alert("❌ Upload failed: " + result.message);
-      }
+      alert(result.success ? "✅ Lecture uploaded" : "❌ Upload failed");
     }
 
-    // init
     fetchCourses();
+    fetchStudents();
   </script>
 </body>
 </html>
