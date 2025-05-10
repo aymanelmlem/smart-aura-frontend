@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Student Sign Up - Smart Aura University</title>
   <style>
     body {
@@ -53,42 +53,42 @@
   <div class="form-container">
     <h2>Student Sign Up</h2>
     <form id="form">
-      <input type="email" id="email" placeholder="Email" required>
-      <input type="password" id="password" placeholder="Password" required>
+      <input type="text" id="name" placeholder="Full Name" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
       <button type="submit">Signup</button>
     </form>
     <div id="message" class="message"></div>
   </div>
 
-<script>
-  document.getElementById('form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const msg = document.getElementById('message');
+  <script>
+    document.getElementById('form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const msg = document.getElementById('message');
 
-    try {
-      const res = await fetch("https://backend-sau-fdr6.onrender.com/api/students/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      if (data.success) {
-        msg.style.color = "green";
-        msg.textContent = "✅ Success!";
-      } else {
-        msg.style.color = "red";
-        msg.textContent = "❌ " + (data.error || data.message);
+      try {
+        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/students/signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ name, email, password })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          msg.style.color = "green";
+          msg.textContent = "✅ Success!";
+        } else {
+          msg.textContent = "❌ " + data.message;
+        }
+      } catch (err) {
+        msg.textContent = "❌ Network error.";
       }
-    } catch (err) {
-      msg.style.color = "red";
-      msg.textContent = "❌ Network error.";
-    }
-  }); // ✅ تم إغلاق addEventListener بشكل صحيح
-</script>
-
+    });
+  </script>
 </body>
 </html>
