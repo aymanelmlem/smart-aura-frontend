@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Instructor Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f0f2f5;
+      padding: 20px;
+    }
+    h2, h3 {
+      color: #0b3d91;
+    }
+    .course {
+      background: #fff;
+      margin-bottom: 30px;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .lecture {
+      background: #eef2f9;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+    input, textarea, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #0b3d91;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #093076;
+    }
+    .file-inputs {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎓 Instructor Dashboard</h2>
+
+  <div class="course" id="course-1">
+    <h3>📘 Course Title: Advanced AI</h3>
+
+    <h4>👨‍🎓 Enroll Student in This Course</h4>
+    <select id="student-select">
+      <option disabled selected>-- Select Student --</option>
+    </select>
+    <button onclick="enrollStudent()">✅ Enroll Selected Student</button>
+
+    <div class="lecture">
+      <h4>➕ Add Lecture</h4>
+      <input type="text" placeholder="Lecture Title" id="lecture-title">
+      <input type="url" placeholder="Video URL (optional)" id="video-url">
+      <textarea placeholder="Lecture Description" id="lecture-description"></textarea>
+
+      <div class="file-inputs" id="file-inputs">
+        <input type="file" name="lecture-files" multiple>
+      </div>
+
+      <button onclick="addMoreFiles()">➕ Add More Files</button>
+      <button onclick="submitLecture()">💾 Save Lecture</button>
+      <button onclick="addQuiz()">📋 Add Quiz</button>
+    </div>
+  </div>
+
+  <script>
+    async function loadStudents() {
+      try {
+        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/students/approved");
+        const data = await res.json();
+        const select = document.getElementById("student-select");
+        data.data.forEach(student => {
+          const opt = document.createElement("option");
+          opt.value = student._id;
+          opt.textContent = student.name + " (" + student.email + ")";
+          select.appendChild(opt);
+        });
+      } catch {
+        alert("❌ Failed to load students");
+      }
+    }
+
+    async function enrollStudent() {
+      const studentId = document.getElementById("student-select").value;
+      const courseId = "COURSE_ID_HERE"; // استبدل هذا لاحقًا بالمعرف الديناميكي للكورس
+      try {
+        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/students/enroll", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentId, courseId })
+        });
+        const data = await res.json();
+        if (data.success) alert("✅ Student enrolled successfully");
+        else alert("❌ " + data.message);
+      } catch {
+        alert("❌ Error enrolling student");
+      }
+    }
+
+    function addMoreFiles() {
+      const container = document.getElementById("file-inputs");
+      const input = document.createElement("input");
+      input.type = "file";
+      input.name = "lecture-files";
+      input.multiple = true;
+      container.appendChild(input);
+    }
+
+    async function submitLecture() {
+      const title = document.getElementById('lecture-title').value;
+      const videoUrl = document.getElementById('video-url').value;
+      const description = document.getElementById('lecture-description').value;
+
+      const files = document.querySelectorAll("input[name='lecture-files']");
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("videoUrl", videoUrl);
+      formData.append("description", description);
+
+      files.forEach(input => {
+        Array.from(input.files).forEach(file => {
+          formData.append("files", file);
+        });
+      });
+
+      try {
+        const res = await fetch("https://backend-sau-fdr6.onrender.com/api/lectures/upload", {
+          method: "POST",
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success) alert("✅ Lecture saved successfully");
+        else alert("❌ " + data.message);
+      } catch (err) {
+        alert("❌ Upload failed");
+      }
+    }
+
+    function addQuiz() {
+      alert("📋 Redirecting to Quiz Creator for this lecture...");
+      // يمكن تنفيذ التوجيه لاحقًا هنا لصفحة أو نافذة إنشاء اختبار
+    }
+
+    loadStudents();
+  </script>
+</body>
+</html>
