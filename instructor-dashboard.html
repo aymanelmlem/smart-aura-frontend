@@ -61,9 +61,7 @@
     <div class="course-section">
       <h3>📚 Your Courses</h3>
       <div id="courseList"></div>
-      <select id="courseSelect" onchange="renderLectureForm()">
-        <option value="">-- Choose a Course --</option>
-      </select>
+
       <button onclick="showAddCourseForm()">➕ Add Course</button>
       <div id="addCourseForm" style="display:none;">
         <input type="text" id="newCourseTitle" placeholder="Course Title" required />
@@ -72,16 +70,6 @@
         <button onclick="addCourse()">✅ Submit Course</button>
       </div>
     </div>
-
-    <div id="studentEnrollSection" class="student-enroll-form" style="display: none;">
-      <h3>👥 Enroll Student to Course</h3>
-      <select id="studentSelect">
-        <option value="">-- Select Student --</option>
-      </select>
-      <button onclick="enrollStudent()">✅ Enroll</button>
-    </div>
-
-    <div id="lectureFormContainer"></div>
   </div>
 
   <script>
@@ -91,42 +79,57 @@
 
     async function fetchCourses() {
       const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/courses/instructor/${instructorId}`, {
-        cache: "no-store" // ✅ يمنع الكاش ويجبر التحديث
+        cache: "no-store"
       });
       const data = await res.json();
-      const select = document.getElementById("courseSelect");
       const list = document.getElementById("courseList");
-      select.innerHTML = '<option value="">-- Choose a Course --</option>';
       list.innerHTML = "";
-      data.data.forEach(course => {
-        const option = document.createElement("option");
-        option.value = course._id;
-        option.textContent = course.title;
-        select.appendChild(option);
 
+      data.data.forEach(course => {
         const courseDiv = document.createElement("div");
-        courseDiv.style.marginBottom = '10px';
-        courseDiv.innerHTML = `<strong>${course.title}</strong> - <em>${course.category}</em><br><small>${course.description || ''}</small>`;
+        courseDiv.className = "course-section";
+        courseDiv.innerHTML = `
+          <h3>📘 ${course.title}</h3>
+          <p><strong>Category:</strong> ${course.category}</p>
+          <p><strong>Description:</strong> ${course.description || ''}</p>
+
+          <form class="lecture-form" onsubmit="submitLecture(event, '${course._id}')">
+            <h4>➕ Add Lecture to ${course.title}</h4>
+            <input type="text" name="title" placeholder="Lecture Title" required />
+            <textarea name="description" placeholder="Lecture Description"></textarea>
+            <select name="category">
+              <option value="Basics">Basics</option>
+              <option value="Advanced">Advanced</option>
+              <option value="Case Study">Case Study</option>
+            </select>
+            <input type="text" name="videoUrl" placeholder="Video URL (optional)" />
+            <input type="text" name="mp3Url" placeholder="MP3 URL (optional)" />
+            <input type="file" name="files" multiple />
+            <button type="submit">Upload Lecture</button>
+            <button type="button" onclick="alert('📋 Add Quiz (coming soon)')">➕ Add Quiz</button>
+          </form>
+        `;
         list.appendChild(courseDiv);
       });
     }
-
     async function fetchStudents() {
       const res = await fetch("https://backend-sau-fdr6.onrender.com/api/instructor/approved-students");
       const data = await res.json();
       const select = document.getElementById("studentSelect");
-      select.innerHTML = '<option value="">-- Select Student --</option>';
-      data.data.forEach(student => {
-        const option = document.createElement("option");
-        option.value = student._id;
-        option.textContent = student.name;
-        select.appendChild(option);
-      });
+      if (select) {
+        select.innerHTML = '<option value="">-- Select Student --</option>';
+        data.data.forEach(student => {
+          const option = document.createElement("option");
+          option.value = student._id;
+          option.textContent = student.name;
+          select.appendChild(option);
+        });
+      }
     }
 
     async function enrollStudent() {
-      const courseId = document.getElementById("courseSelect").value;
       const studentId = document.getElementById("studentSelect").value;
+      const courseId = document.getElementById("courseSelect")?.value; // may not exist
       const res = await fetch("https://backend-sau-fdr6.onrender.com/api/instructor/enroll-student", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -154,55 +157,14 @@
       const result = await res.json();
       alert(result.success ? "✅ Course added" : "❌ " + result.message);
       document.getElementById("addCourseForm").style.display = "none";
-      fetchCourses();
+      await fetchCourses();
     }
 
-    function logout() {
-      localStorage.clear();
-      window.location.href = "instructor-login.html";
-    }
-
-    function renderLectureForm() {
-      const courseId = document.getElementById("courseSelect").value;
-      document.getElementById("studentEnrollSection").style.display = courseId ? 'block' : 'none';
-      if (!courseId) {
-        document.getElementById("lectureFormContainer").innerHTML = "";
-        return;
-      }
-      document.getElementById("lectureFormContainer").innerHTML = `
-        <form class="lecture-form" onsubmit="submitLecture(event)">
-          <h3>📝 Add Lecture</h3>
-          <input type="text" id="title" placeholder="Lecture Title" required />
-          <textarea id="description" placeholder="Lecture Description"></textarea>
-          <select id="category">
-            <option value="Basics">Basics</option>
-            <option value="Advanced">Advanced</option>
-            <option value="Case Study">Case Study</option>
-          </select>
-          <input type="text" id="videoUrl" placeholder="Video URL (optional)" />
-          <input type="text" id="mp3Url" placeholder="MP3 URL (optional)" />
-          <input type="file" id="files" multiple />
-          <button type="submit">Upload Lecture</button>
-          <button type="button" onclick="alert('📋 Add Quiz')">➕ Add Quiz</button>
-        </form>
-      `;
-    }
-
-    async function submitLecture(e) {
+    async function submitLecture(e, courseId) {
       e.preventDefault();
-      const courseId = document.getElementById("courseSelect").value;
-      const formData = new FormData();
-      formData.append("title", document.getElementById("title").value);
-      formData.append("description", document.getElementById("description").value);
-      formData.append("category", document.getElementById("category").value);
-      formData.append("videoUrl", document.getElementById("videoUrl").value);
-      formData.append("mp3Url", document.getElementById("mp3Url").value);
+      const form = e.target;
+      const formData = new FormData(form);
       formData.append("courseId", courseId);
-
-      const files = document.getElementById("files").files;
-      for (let i = 0; i < files.length; i++) {
-        formData.append("files", files[i]);
-      }
 
       const res = await fetch("https://backend-sau-fdr6.onrender.com/api/instructor/upload", {
         method: "POST",
@@ -211,6 +173,12 @@
 
       const result = await res.json();
       alert(result.success ? "✅ Lecture uploaded" : "❌ Upload failed");
+      form.reset();
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "instructor-login.html";
     }
 
     fetchCourses();
