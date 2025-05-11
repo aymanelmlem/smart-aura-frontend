@@ -144,21 +144,30 @@
       form.style.display = form.style.display === "none" ? "block" : "none";
     }
 
-    async function addCourse() {
-      const title = document.getElementById("newCourseTitle").value;
-      const category = document.getElementById("newCourseCategory").value;
-      const description = document.getElementById("newCourseDescription").value;
-      if (!title || !category) return alert("Please enter title and category");
-      const res = await fetch("https://backend-sau-fdr6.onrender.com/api/courses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, category, description, instructorId })
-      });
-      const result = await res.json();
-      alert(result.success ? "✅ Course added" : "❌ " + result.message);
-      document.getElementById("addCourseForm").style.display = "none";
-      await fetchCourses();
-    }
+  async function addCourse() {
+  const title = document.getElementById("newCourseTitle").value;
+  const category = document.getElementById("newCourseCategory").value;
+  const description = document.getElementById("newCourseDescription").value;
+
+  if (!title || !category) return alert("Please enter title and category");
+
+  // ✅ تأكد من وجود المعرف
+  if (!instructorId) {
+    alert("❌ instructorId is missing. Please log in again.");
+    return;
+  }
+
+  const res = await fetch("https://backend-sau-fdr6.onrender.com/api/courses", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, category, description, instructorId })
+  });
+
+  const result = await res.json();
+  alert(result.success ? "✅ Course added" : "❌ " + result.message);
+  document.getElementById("addCourseForm").style.display = "none";
+  await fetchCourses();
+}
 
     async function submitLecture(e, courseId) {
       e.preventDefault();
