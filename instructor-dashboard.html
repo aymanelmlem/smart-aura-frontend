@@ -160,7 +160,7 @@
   const res = await fetch("https://backend-sau-fdr6.onrender.com/api/courses", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, category, description, instructorId })
+    body: JSON.stringify({ title, category, description, instructorId: "681f6c3631345e8597fcc703" })
   });
 
   const result = await res.json();
