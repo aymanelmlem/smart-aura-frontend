@@ -90,7 +90,9 @@
     document.getElementById("instructorName").innerText = instructorName;
 
     async function fetchCourses() {
-      const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/courses/instructor/${instructorId}`);
+      const res = await fetch(`https://backend-sau-fdr6.onrender.com/api/courses/instructor/${instructorId}`, {
+        cache: "no-store" // ✅ يمنع الكاش ويجبر التحديث
+      });
       const data = await res.json();
       const select = document.getElementById("courseSelect");
       const list = document.getElementById("courseList");
